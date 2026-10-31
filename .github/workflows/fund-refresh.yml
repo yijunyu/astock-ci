@@ -1,0 +1,31 @@
+name: 重建基本面并写入 KV
+
+on:
+  schedule:
+    # 每周一 08:10 UTC = 北京时间 16:10（收盘后）
+    - cron: '10 8 * * 1'
+  workflow_dispatch: {}
+
+concurrency:
+  group: fund-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: 检出
+        uses: actions/checkout@v4
+
+      - name: 准备 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 拉取基本面并写入 Cloudflare KV
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_KV_NAMESPACE: ${{ secrets.CF_KV_NAMESPACE }}
+        run: node scripts/refresh_fund.js
